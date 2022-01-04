@@ -1,20 +1,20 @@
 package org.alxndr;
 
-import javax.ws.rs.GET;
-import javax.ws.rs.Path;
-import javax.ws.rs.Produces;
+import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Path("/movies")
 public class MovieResource {
 
-    public static List<String> movies = new ArrayList<>();
+    public static List<Movie> movies = new ArrayList<>();
 
     @GET
-    @Produces(MediaType.TEXT_PLAIN)
+    @Produces(MediaType.APPLICATION_JSON)
     public Response getMovies() {
         return Response.ok(movies).build();
     }
@@ -24,6 +24,52 @@ public class MovieResource {
     @Path("/size")
     public Integer countMovies() {
         return movies.size();
+    }
+
+    @POST
+    @Produces(MediaType.APPLICATION_JSON)
+    @Consumes(MediaType.APPLICATION_JSON)
+    public Response addMovie(Movie newMovie) {
+        movies.add(newMovie);
+
+        return Response.ok(movies).build();
+
+    }
+
+
+    @PUT
+    @Path("{id}/{title}")
+    @Produces(MediaType.APPLICATION_JSON)
+    @Consumes(MediaType.APPLICATION_JSON)
+    public Response updateMovie(
+            @PathParam("id") Long id,
+            @PathParam("title") String title) {
+        movies = movies.stream().map(movie -> {
+            if (movie.getId() == id) {
+                movie.setTitle(title);
+            }
+            return movie;
+        }).collect(Collectors.toList());
+
+        return Response.ok(movies).build();
+
+    }
+
+    @DELETE
+    @Path("{id}")
+    @Consumes(MediaType.APPLICATION_JSON)
+    public Response deleteMovie(@PathParam("id") Long id) {
+        Optional<Movie> movieToDelete = movies.stream().filter(movie -> movie.getId() == id)
+                .findFirst();
+        boolean removed = false;
+        if (movieToDelete.isPresent()) {
+            removed = movies.remove(movieToDelete.get());
+        }
+        if (removed) {
+            return Response.noContent().build();
+        }
+        return Response.status(Response.Status.BAD_REQUEST).build();
+
     }
 
 
